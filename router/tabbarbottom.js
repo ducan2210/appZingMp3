@@ -1,11 +1,11 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
-import CaNhanUI from './caNhanUI'; // Import các screen bạn muốn hiển thị trong các tab
-import khamPhaUI from './khamPhaUI';
-import RadioUI from './radioUI';
-import ZingChartUI from './zingChartUI';
-import ThuVienUI from './thuVienUI';
+import ThuVienStack from './thuVienStack';
+import KhamPhaStack from './khamPhaStack';
+import RadioStack from './radioStack';
+import ZingChartStack from './zingChartStack';
+import CaNhanStack from './caNhanStack';
 import { MaterialIcons, FontAwesome, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { heightPercentageToDP as hp, widthPercentageToDP as wp } from 'react-native-responsive-screen';
 const Tab = createBottomTabNavigator();
@@ -42,11 +42,11 @@ export default function Tabbarbottom() {
       })}
       initialRouteName="Khám phá"
     >
-      <Tab.Screen name="Thư viện" component={ThuVienUI} />
-      <Tab.Screen name="Khám phá" component={khamPhaUI} />
-      <Tab.Screen name="#ZingChart" component={ZingChartUI} />
-      <Tab.Screen name="Radio" component={RadioUI} />
-      <Tab.Screen name="Cá nhân" component={CaNhanUI} />
+      <Tab.Screen name="Thư viện" component={ThuVienStack} />
+      <Tab.Screen name="Khám phá" component={KhamPhaStack} />
+      <Tab.Screen name="#ZingChart" component={ZingChartStack} />
+      <Tab.Screen name="Radio" component={RadioStack} />
+      <Tab.Screen name="Cá nhân" component={CaNhanStack} />
     </Tab.Navigator>
   );
 }

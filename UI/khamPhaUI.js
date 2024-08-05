@@ -29,6 +29,11 @@ import { formatRelativeTime, shuffleArray, formatDate } from '../component/libra
 
 import { toggleToPlayMusicUI } from '../component/remote';
 
+import { useNavigation } from '@react-navigation/native';
+
+import { setDataPlaylist, setTitlePlaylist, loadPlayList } from '../redux/soundSlice';
+import { useSelector, useDispatch } from 'react-redux';
+
 export default function KhamPhaUI() {
   const [dataHome, setDataHome] = useState([]);
   const [dataHomeBaner, setDataHomeBaner] = useState([]);
@@ -45,13 +50,17 @@ export default function KhamPhaUI() {
   const [idMusic, setIdMusic] = useState('');
   const [textTitle, setTextTitle] = useState('');
   const date = formatDate();
-
+  const dispatch = useDispatch();
   const toPlayMusicUI = toggleToPlayMusicUI();
+  const navigation = useNavigation();
+
+  const toggleToZingChart = () => {
+    navigation.navigate('#ZingChart');
+  };
 
   const loadData = async () => {
     try {
       const dataHome = await loadDataHome();
-      const zingChartData = await loadDataPlayList('Z6CZO0F6');
 
       dataHome.data.items.forEach((item) => {
         if (item.sectionType === 'new-release') {
@@ -118,76 +127,9 @@ export default function KhamPhaUI() {
     return result;
   };
 
-  // Hàm để render item
-  const renderItem = ({ item }) => (
-    <TouchableOpacity
-      onPress={() => {
-        toPlayMusicUI(item.encodeId);
-      }}
-      style={styles.itemContainer}
-    >
-      <Image source={{ uri: item.thumbnailM }} style={styles.imageStyle} />
-      <View style={styles.textContainer}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Text
-            style={{
-              color: 'white',
-              fontSize: wp('4.5%'),
-              maxWidth: item.previewInfo ? wp(44) : wp(55), // Thay đổi tùy thuộc vào điều kiện
-              marginRight: wp(1),
-            }}
-            numberOfLines={1} // Giới hạn số dòng hiển thị
-            ellipsizeMode="tail"
-          >
-            {item.title}
-          </Text>
-          {item.previewInfo ? (
-            <View
-              style={{
-                paddingHorizontal: wp(1),
-                backgroundColor: 'rgba(128, 128, 128, 0.2)',
-                borderRadius: wp(1),
-                justifyContent: 'center',
-                alignItems: 'center',
-                height: wp(4.5),
-              }}
-            >
-              <Text style={{ color: 'gold', fontSize: wp(2), fontWeight: 'bold' }}>PREMIUM</Text>
-            </View>
-          ) : (
-            <></>
-          )}
-        </View>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text
-            style={styles.artistsText}
-            numberOfLines={1} // Giới hạn số dòng hiển thị
-            ellipsizeMode="tail" // Thêm dấu ba chấm ở cuối nếu vượt quá chiều rộng
-          >
-            {item.artists.reduce((acc, artist, index) => {
-              return acc + artist.name + (index < item.artists.length - 1 ? ', ' : '');
-            }, '')}
-          </Text>
-          <TouchableOpacity>
-            <Entypo name="dots-three-horizontal" size={wp('5%')} marginRight={wp(4)} color="grey" />
-          </TouchableOpacity>
-        </View>
-        <Text style={{ color: 'gray', fontSize: wp(3.5) }}>{formatRelativeTime(item.releaseDate)}</Text>
-      </View>
-    </TouchableOpacity>
-  );
-
-  // Hàm để render từng hàng của FlatList
-  const renderRow = ({ item }) => (
-    <FlatList
-      data={item}
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      keyExtractor={(item) => (item.id ? item.id.toString() : Math.random().toString())}
-      renderItem={renderItem}
-      contentContainerStyle={styles.rowContainer}
-    />
-  );
+  const togglePlaylistMuic = () => {
+    navigation.navigate('PlayListSoundUI');
+  };
 
   return loading ? (
     <LoadingIndicator></LoadingIndicator>
@@ -233,11 +175,72 @@ export default function KhamPhaUI() {
           </View>
           <View>
             <FlatList
-              data={getDataChunks(combinedData.slice(0, 7) || [], 3)}
-              renderItem={renderRow}
+              data={getDataChunks(dataRandom.slice(0, 7) || [], 3)}
               horizontal
               showsHorizontalScrollIndicator={false}
               keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item }) => (
+                <FlatList
+                  data={item}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  keyExtractor={(item) => (item.id ? item.id.toString() : Math.random().toString())}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      onPress={() => {
+                        dispatch(setDataPlaylist(combinedData));
+                        dispatch(setTitlePlaylist('Bài hát gợi ý'));
+                        toPlayMusicUI(item.encodeId);
+                      }}
+                      style={styles.itemContainer}
+                    >
+                      <Image source={{ uri: item.thumbnailM }} style={styles.imageStyle} />
+                      <View style={styles.textContainer}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <Text
+                            style={{
+                              color: 'white',
+                              fontSize: wp('4.5%'),
+                              maxWidth: item?.previewInfo ? wp(44) : wp(55),
+                              marginRight: wp(1),
+                            }}
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                          >
+                            {item.title}
+                          </Text>
+                          {item?.previewInfo ? (
+                            <View
+                              style={{
+                                paddingHorizontal: wp(1),
+                                backgroundColor: 'rgba(128, 128, 128, 0.2)',
+                                borderRadius: wp(1),
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                height: wp(4.5),
+                              }}
+                            >
+                              <Text style={{ color: 'gold', fontSize: wp(2), fontWeight: 'bold' }}>PREMIUM</Text>
+                            </View>
+                          ) : null}
+                        </View>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Text style={styles.artistsText} numberOfLines={1} ellipsizeMode="tail">
+                            {item.artists.reduce((acc, artist, index) => {
+                              return acc + artist.name + (index < item.artists.length - 1 ? ', ' : '');
+                            }, '')}
+                          </Text>
+                          <TouchableOpacity>
+                            <Entypo name="dots-three-horizontal" size={wp('5%')} marginRight={wp(4)} color="grey" />
+                          </TouchableOpacity>
+                        </View>
+                        <Text style={{ color: 'gray', fontSize: wp(3.5) }}>{formatRelativeTime(item.releaseDate)}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                  contentContainerStyle={styles.rowContainer}
+                />
+              )}
             />
           </View>
           <TouchableOpacity style={styles.sectionHeader}>
@@ -288,10 +291,71 @@ export default function KhamPhaUI() {
           <View>
             <FlatList
               data={getDataChunks(dataHomeNew[genreNew] || [], 3)}
-              renderItem={renderRow}
               horizontal
               showsHorizontalScrollIndicator={false}
               keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item }) => (
+                <FlatList
+                  data={item}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  keyExtractor={(item) => (item.id ? item.id.toString() : Math.random().toString())}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      onPress={() => {
+                        dispatch(setDataPlaylist(dataHomeNew[genreNew]));
+                        dispatch(setTitlePlaylist('Mới phát hành'));
+                        toPlayMusicUI(item.encodeId);
+                      }}
+                      style={styles.itemContainer}
+                    >
+                      <Image source={{ uri: item.thumbnailM }} style={styles.imageStyle} />
+                      <View style={styles.textContainer}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <Text
+                            style={{
+                              color: 'white',
+                              fontSize: wp('4.5%'),
+                              maxWidth: item?.previewInfo ? wp(44) : wp(55),
+                              marginRight: wp(1),
+                            }}
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                          >
+                            {item.title}
+                          </Text>
+                          {item?.previewInfo ? (
+                            <View
+                              style={{
+                                paddingHorizontal: wp(1),
+                                backgroundColor: 'rgba(128, 128, 128, 0.2)',
+                                borderRadius: wp(1),
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                height: wp(4.5),
+                              }}
+                            >
+                              <Text style={{ color: 'gold', fontSize: wp(2), fontWeight: 'bold' }}>PREMIUM</Text>
+                            </View>
+                          ) : null}
+                        </View>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Text style={styles.artistsText} numberOfLines={1} ellipsizeMode="tail">
+                            {item.artists.reduce((acc, artist, index) => {
+                              return acc + artist.name + (index < item.artists.length - 1 ? ', ' : '');
+                            }, '')}
+                          </Text>
+                          <TouchableOpacity>
+                            <Entypo name="dots-three-horizontal" size={wp('5%')} marginRight={wp(4)} color="grey" />
+                          </TouchableOpacity>
+                        </View>
+                        <Text style={{ color: 'gray', fontSize: wp(3.5) }}>{formatRelativeTime(item.releaseDate)}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  )}
+                  contentContainerStyle={styles.rowContainer}
+                />
+              )}
             />
           </View>
 
@@ -322,7 +386,7 @@ export default function KhamPhaUI() {
                   fontSize={wp('5.5%')}
                   fontWeight="bold"
                   x={wp('15%')}
-                  y={wp('5%')}
+                  y={wp('6%')}
                   textAnchor="middle"
                   clipPath="url(#clip)"
                 >
@@ -332,7 +396,15 @@ export default function KhamPhaUI() {
             </TouchableOpacity>
             <View>
               {chart?.slice(0, 5).map((item, index) => (
-                <TouchableOpacity key={index} style={{ flexDirection: 'row', marginBottom: hp('2%') }}>
+                <TouchableOpacity
+                  onPress={() => {
+                    dispatch(setDataPlaylist(chart));
+                    dispatch(setTitlePlaylist('#ZingChart'));
+                    toPlayMusicUI(item.encodeId);
+                  }}
+                  key={index}
+                  style={{ flexDirection: 'row', marginBottom: hp('2%') }}
+                >
                   <View>
                     <Image
                       style={{ height: wp('15%'), width: wp('15%'), borderRadius: 5 }}
@@ -368,7 +440,7 @@ export default function KhamPhaUI() {
                 </TouchableOpacity>
               ))}
               <View style={{ borderTopWidth: 0.4, borderColor: 'grey' }}></View>
-              <TouchableOpacity style={{ justifyContent: 'center', alignItems: 'center' }}>
+              <TouchableOpacity onPress={toggleToZingChart} style={{ justifyContent: 'center', alignItems: 'center' }}>
                 <Text style={{ color: 'white', fontSize: wp(3.5), paddingTop: 15 }}>Xem tất cả</Text>
               </TouchableOpacity>
             </View>
@@ -384,6 +456,10 @@ export default function KhamPhaUI() {
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: wp(4) }}>
                   {genres?.items?.slice(0, 6).map((item, itemIndex) => (
                     <TouchableOpacity
+                      onPress={() => {
+                        dispatch(loadPlayList(item.encodeId));
+                        togglePlaylistMuic();
+                      }}
                       key={item.encodeId || itemIndex}
                       style={{ flexDirection: 'column', width: wp(35), marginRight: wp(3) }}
                     >

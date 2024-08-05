@@ -3,7 +3,7 @@ import { Text, View, StyleSheet, ImageBackground, TouchableOpacity, Image, Scrol
 import { heightPercentageToDP as hp, widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import { Feather, AntDesign, Entypo, FontAwesome5, FontAwesome6, FontAwesome } from '@expo/vector-icons';
 import { loadDataMusic, loadMusicRecommend, loadSoundPremium, loadSoundNor, loadLyric } from '../CallAPI/mp3API';
-import { toggleToHome } from '../component/remote';
+import { toggleGoBack } from '../component/remote';
 import LoadingIndicator from '../component/loadingIndicator';
 import PagerView from 'react-native-pager-view';
 import { formatDateRelativeTime } from '../component/library';
@@ -11,20 +11,55 @@ import * as Animatable from 'react-native-animatable';
 import { Audio } from 'expo-av';
 import Slider from '@react-native-community/slider';
 import { useSound } from '../component/soundContext';
+import Animated, {
+  useSharedValue,
+  withRepeat,
+  withTiming,
+  withSpring,
+  useAnimatedStyle,
+  Easing,
+} from 'react-native-reanimated';
+
+import { useSelector } from 'react-redux';
 
 export default function PlayMusicUI({ route }) {
   const { id } = route.params || {};
   const [music, setMusic] = useState([]);
   const [musicRecommend, setMusicRecommend] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [position, setPosition] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const headderTitle = useSelector((state) => state.sound.titlePlaylist);
   const [selectedPage, setSelectedPage] = useState(0);
-  const { sound, setSound } = useSound();
-  const toggleBackHome = toggleToHome();
+
+  const toggleBackHome = toggleGoBack();
   const [idSound, setIdSound] = useState(id);
+  const { sound, setSound, isPlaying, setIsPlaying, playPauseHandler, position, duration } = useSound();
   const [lyric, setLyric] = useState([]);
+
+  // Shared value to hold the rotation angle
+  const rotate = useSharedValue(0);
+
+  // Update rotation value based on playing status
+  useEffect(() => {
+    if (isPlaying) {
+      rotate.value = withRepeat(
+        withTiming(360, {
+          duration: 17000,
+          easing: Easing.linear,
+        }),
+        -1, // Infinite loop
+        0, // No reverse animation
+      );
+    } else {
+      rotate.value = withTiming(rotate.value, { duration: 0 }); // Maintain current rotation value when paused
+    }
+  }, [isPlaying]);
+
+  // Animated style for the image
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ rotate: `${rotate.value}deg` }],
+    };
+  });
 
   const loadData = async () => {
     setLoading(true);
@@ -40,42 +75,24 @@ export default function PlayMusicUI({ route }) {
       const loadSound = await loadSoundNor(idSound);
       const loadLy = await loadLyric(idSound);
       setLyric(loadLy);
-      if (dataMusic?.data.previewInfo) {
+
+      if (dataMusic?.data?.previewInfo) {
         const loadSoundPre = await loadSoundPremium(idSound);
         const { sound: newSound } = await Audio.Sound.createAsync(
           { uri: loadSoundPre.data.link },
           { shouldPlay: true },
-          handlePlaybackStatusUpdate,
         );
         setSound(newSound);
+        setIsPlaying(true);
       } else {
-        const { sound: newSound } = await Audio.Sound.createAsync(
-          { uri: loadSound.data[128] },
-          { shouldPlay: true },
-          handlePlaybackStatusUpdate,
-        );
+        const { sound: newSound } = await Audio.Sound.createAsync({ uri: loadSound.data[128] }, { shouldPlay: true });
         setSound(newSound);
+        setIsPlaying(true);
       }
       setLoading(false);
     } catch (error) {
       console.error('error', error);
       throw error;
-    }
-  };
-
-  const playPauseHandler = async () => {
-    if (isPlaying) {
-      await sound.pauseAsync();
-    } else {
-      await sound.playAsync();
-    }
-    setIsPlaying(!isPlaying);
-  };
-
-  const handlePlaybackStatusUpdate = (status) => {
-    if (status.isLoaded) {
-      setPosition(status.positionMillis);
-      setDuration(status.durationMillis);
     }
   };
 
@@ -107,21 +124,28 @@ export default function PlayMusicUI({ route }) {
     >
       <View style={styles.overlay} />
       <View style={styles.Container}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <TouchableOpacity onPress={toggleBackHome}>
             <AntDesign name="down" size={wp(5)} color="white" />
           </TouchableOpacity>
-          <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+            {headderTitle && selectedPage === 1 ? (
+              <Text style={{ color: '#A9A9A9', fontWeight: 'bold' }}>PHÁT TỪ</Text>
+            ) : (
+              <></>
+            )}
             <Text
               numberOfLines={1} // Giới hạn số dòng hiển thị
               ellipsizeMode="tail" // Thêm dấu ba chấm ở cuối nếu vượt quá chiều rộng
               maxWidth={wp(70)}
-              style={{ color: 'white', fontWeight: 'bold' }}
+              style={{ color: 'white', fontWeight: 'bold', marginVertical: wp(1) }}
             >
               {selectedPage === 0
                 ? 'Thông tin'
                 : selectedPage === 1
-                ? music?.album?.title
+                ? headderTitle
+                  ? headderTitle
+                  : music?.album?.title
                 : selectedPage === 2
                 ? 'Lời bài hát'
                 : ''}
@@ -139,7 +163,7 @@ export default function PlayMusicUI({ route }) {
                     },
                   ]}
                   animation={index === selectedPage ? 'pulse' : undefined}
-                  duration={300}
+                  duration={100}
                   easing="ease-in-out"
                 />
               ))}
@@ -147,7 +171,7 @@ export default function PlayMusicUI({ route }) {
           </View>
           <Entypo name="dots-three-horizontal" size={wp(5)} color="white" />
         </View>
-        <PagerView style={styles.pagerView} initialPage={2} onPageSelected={handlePageChange}>
+        <PagerView style={styles.pagerView} initialPage={1} onPageSelected={handlePageChange}>
           <ScrollView showsVerticalScrollIndicator={false} key="1" style={styles.page}>
             <View style={styles.infoContainer}>
               <View style={styles.infoHeader}>
@@ -157,7 +181,7 @@ export default function PlayMusicUI({ route }) {
                     <Text style={styles.titleText} numberOfLines={2} ellipsizeMode="tail">
                       {music.title}
                     </Text>
-                    {music.previewInfo ? (
+                    {music?.previewInfo ? (
                       <View
                         style={{
                           paddingHorizontal: wp(1),
@@ -258,13 +282,13 @@ export default function PlayMusicUI({ route }) {
                             fontWeight: 'bold',
                             color: 'white',
                             marginBottom: wp(2),
-                            maxWidth: item.previewInfo ? wp(52) : wp(70),
+                            maxWidth: item?.previewInfo ? wp(52) : wp(70),
                             marginRight: wp(1),
                           }}
                         >
                           {item.title}
                         </Text>
-                        {item.previewInfo ? (
+                        {item?.previewInfo ? (
                           <View
                             style={{
                               paddingHorizontal: wp(1),
@@ -304,14 +328,7 @@ export default function PlayMusicUI({ route }) {
           </ScrollView>
           <View key="2" style={styles.page}>
             <View style={styles.imageContainer}>
-              <Animatable.Image
-                style={styles.image}
-                source={{ uri: music.thumbnailM }} // URL hình ảnh, thay thế bằng URL thực tế
-                animation={isPlaying ? 'rotate' : undefined}
-                iterationCount="infinite"
-                duration={20000} // Thay đổi thời gian quay
-                easing="linear"
-              />
+              <Animated.Image style={[styles.image, animatedStyle]} source={{ uri: music.thumbnailM }} />
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <FontAwesome6 name="share-square" size={wp(6)} color="#A9A9A9" />
@@ -348,7 +365,7 @@ export default function PlayMusicUI({ route }) {
                   <Text style={{ ...styles.titleText, marginBottom: wp(2) }} numberOfLines={2} ellipsizeMode="tail">
                     {music.title}
                   </Text>
-                  {music.previewInfo ? (
+                  {music?.previewInfo ? (
                     <View
                       style={{
                         paddingHorizontal: wp(1),
@@ -488,10 +505,10 @@ const styles = StyleSheet.create({
   Container: {
     flex: 1,
     paddingHorizontal: wp(4),
-    paddingTop: hp('7.5%'),
+    paddingTop: hp('6.5%'),
   },
   pagerView: {
-    height: hp(65),
+    height: hp(60),
   },
   text: {
     color: 'white',
@@ -501,7 +518,7 @@ const styles = StyleSheet.create({
   indicatorContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginVertical: 10,
+    marginVertical: wp(1),
   },
   indicator: {
     height: wp(1),

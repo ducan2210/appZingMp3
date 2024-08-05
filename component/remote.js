@@ -12,12 +12,22 @@ export const toggleToPlayMusicUI = () => {
   return toggleToPlayMusicUI;
 };
 
-export const toggleToHome = () => {
+export const toggleGoBack = () => {
   const navigation = useNavigation();
 
-  const toggleToPlayMusicUI = () => {
-    navigation.navigate('ContainerRouter');
+  const toggleGoBack = () => {
+    navigation.goBack();
   };
 
-  return toggleToPlayMusicUI;
+  return toggleGoBack;
+};
+
+export const toggleToZingChart = () => {
+  const navigation = useNavigation();
+
+  const toggleToZingChart = () => {
+    navigation.navigate('ZingChartUI');
+  };
+
+  return toggleToZingChart;
 };
