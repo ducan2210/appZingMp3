@@ -11,20 +11,13 @@ import * as Animatable from 'react-native-animatable';
 import { Audio } from 'expo-av';
 import Slider from '@react-native-community/slider';
 import { useSound } from '../component/soundContext';
-import Animated, {
-  useSharedValue,
-  withRepeat,
-  withTiming,
-  withSpring,
-  useAnimatedStyle,
-  Easing,
-} from 'react-native-reanimated';
-
-import { useSelector } from 'react-redux';
+import Animated, { useSharedValue, withRepeat, withTiming, useAnimatedStyle, Easing } from 'react-native-reanimated';
+import { loadSoundData } from '../redux/soundControlSlice';
+import { useDispatch, useSelector } from 'react-redux';
 
 export default function PlayMusicUI({ route }) {
   const { id } = route.params || {};
-  const [music, setMusic] = useState([]);
+  // const [music, setMusic] = useState([]);
   const [musicRecommend, setMusicRecommend] = useState([]);
   const [loading, setLoading] = useState(true);
   const headderTitle = useSelector((state) => state.sound.titlePlaylist);
@@ -34,6 +27,12 @@ export default function PlayMusicUI({ route }) {
   const [idSound, setIdSound] = useState(id);
   const { sound, setSound, isPlaying, setIsPlaying, playPauseHandler, position, duration } = useSound();
   const [lyric, setLyric] = useState([]);
+
+  const dispatch = useDispatch();
+  const music = useSelector((state) => state.soundControl.soundData);
+  useEffect(() => {
+    dispatch(loadSoundData(idSound));
+  }, [dispatch, idSound]);
 
   // Shared value to hold the rotation angle
   const rotate = useSharedValue(0);
@@ -68,24 +67,21 @@ export default function PlayMusicUI({ route }) {
         await sound.stopAsync();
         await sound.unloadAsync();
       }
-      const dataMusic = await loadDataMusic(idSound);
+      // const dataMusic = await loadDataMusic(idSound);
       const dataRecommend = await loadMusicRecommend(idSound);
-      setMusic(dataMusic.data);
+      // setMusic(datamusic?.data?.data);
       setMusicRecommend(dataRecommend.data);
       const loadSound = await loadSoundNor(idSound);
       const loadLy = await loadLyric(idSound);
       setLyric(loadLy);
 
-      if (dataMusic?.data?.previewInfo) {
+      if (music?.data?.previewInfo) {
         const loadSoundPre = await loadSoundPremium(idSound);
-        const { sound: newSound } = await Audio.Sound.createAsync(
-          { uri: loadSoundPre.data.link },
-          { shouldPlay: true },
-        );
+        const { sound: newSound } = await Audio.Sound.createAsync({ uri: loadSoundPre.data.link });
         setSound(newSound);
         setIsPlaying(true);
       } else {
-        const { sound: newSound } = await Audio.Sound.createAsync({ uri: loadSound.data[128] }, { shouldPlay: true });
+        const { sound: newSound } = await Audio.Sound.createAsync({ uri: loadSound.data[128] });
         setSound(newSound);
         setIsPlaying(true);
       }
@@ -100,6 +96,11 @@ export default function PlayMusicUI({ route }) {
     loadData();
   }, [idSound]);
 
+  useEffect(() => {
+    if (!loading && sound) {
+      sound.playAsync(); // Bắt đầu phát nhạc khi loading hoàn tất
+    }
+  }, [loading, sound]);
   const handlePageChange = (e) => {
     setSelectedPage(e.nativeEvent.position);
   };
@@ -118,13 +119,13 @@ export default function PlayMusicUI({ route }) {
     <LoadingIndicator />
   ) : (
     <ImageBackground
-      source={{ uri: music.thumbnailM }} // URL hình ảnh nền, thay thế bằng URL thực tế
+      source={{ uri: music?.data?.thumbnailM }} // URL hình ảnh nền, thay thế bằng URL thực tế
       style={styles.backgroundImage}
       blurRadius={20} // Độ mờ của hình ảnh nền
     >
       <View style={styles.overlay} />
       <View style={styles.Container}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', height: hp(7) }}>
           <TouchableOpacity onPress={toggleBackHome}>
             <AntDesign name="down" size={wp(5)} color="white" />
           </TouchableOpacity>
@@ -175,13 +176,13 @@ export default function PlayMusicUI({ route }) {
           <ScrollView showsVerticalScrollIndicator={false} key="1" style={styles.page}>
             <View style={styles.infoContainer}>
               <View style={styles.infoHeader}>
-                <Image style={styles.thumbnail} source={{ uri: music.thumbnail }} />
+                <Image style={styles.thumbnail} source={{ uri: music?.data?.thumbnail }} />
                 <View style={styles.infoTextContainer}>
                   <View style={{ flexDirection: 'row' }}>
                     <Text style={styles.titleText} numberOfLines={2} ellipsizeMode="tail">
-                      {music.title}
+                      {music?.data?.title}
                     </Text>
-                    {music?.previewInfo ? (
+                    {music?.data?.previewInfo ? (
                       <View
                         style={{
                           paddingHorizontal: wp(1),
@@ -199,20 +200,20 @@ export default function PlayMusicUI({ route }) {
                     )}
                   </View>
                   <Text style={styles.artistsText} numberOfLines={3} ellipsizeMode="tail">
-                    {Array.isArray(music.artists) && music.artists.length > 0
-                      ? music?.artists?.reduce((acc, artist, index) => {
-                          return acc + artist.name + (index < music.artists.length - 1 ? ', ' : '');
+                    {Array.isArray(music?.data?.artists) && music?.data?.artists.length > 0
+                      ? music?.data?.artists?.reduce((acc, artist, index) => {
+                          return acc + artist.name + (index < music?.data?.artists.length - 1 ? ', ' : '');
                         }, '')
                       : 'Unknown Artist'}
                   </Text>
                   <View style={styles.statsContainer}>
                     <View style={styles.statItem}>
                       <FontAwesome5 name="heart" size={wp(4)} color="#A9A9A9" />
-                      <Text style={styles.statText}>{music.like}</Text>
+                      <Text style={styles.statText}>{music?.data?.like}</Text>
                     </View>
                     <View style={styles.statItem}>
                       <Feather name="headphones" size={wp(4)} color="#A9A9A9" />
-                      <Text style={styles.statText}>{music.listen}</Text>
+                      <Text style={styles.statText}>{music?.data?.listen}</Text>
                     </View>
                   </View>
                 </View>
@@ -221,15 +222,15 @@ export default function PlayMusicUI({ route }) {
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Album</Text>
                   <Text style={styles.detailValue} numberOfLines={3} ellipsizeMode="tail">
-                    {music?.album?.title}
+                    {music?.data?.album?.title}
                   </Text>
                 </View>
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Nhạc sĩ</Text>
                   <Text style={styles.detailValue} numberOfLines={3} ellipsizeMode="tail">
-                    {Array.isArray(music.artists) && music.artists.length > 0
-                      ? music?.composers?.reduce((acc, composers, index) => {
-                          return acc + composers.name + (index < music.composers.length - 1 ? ', ' : '');
+                    {Array.isArray(music?.data?.artists) && music?.data?.artists.length > 0
+                      ? music?.data?.composers?.reduce((acc, composers, index) => {
+                          return acc + composers.name + (index < music?.data?.composers.length - 1 ? ', ' : '');
                         }, '')
                       : 'Unknown Artist'}
                   </Text>
@@ -237,20 +238,20 @@ export default function PlayMusicUI({ route }) {
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Thể loại</Text>
                   <Text style={styles.detailValue} numberOfLines={3} ellipsizeMode="tail">
-                    {Array.isArray(music.artists) && music.artists.length > 0
+                    {Array.isArray(music?.data?.artists) && music?.data?.artists.length > 0
                       ? music?.genres?.reduce((acc, genres, index) => {
-                          return acc + genres.name + (index < music.genres.length - 1 ? ', ' : '');
+                          return acc + genres.name + (index < music?.data?.genres.length - 1 ? ', ' : '');
                         }, '')
                       : 'Unknown Artist'}
                   </Text>
                 </View>
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Phát hành</Text>
-                  <Text style={styles.detailValue}>{formatDateRelativeTime(music.releaseDate)}</Text>
+                  <Text style={styles.detailValue}>{formatDateRelativeTime(music?.data?.releaseDate)}</Text>
                 </View>
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Cung cấp</Text>
-                  <Text style={styles.detailValue}>{music.distributor}</Text>
+                  <Text style={styles.detailValue}>{music?.data?.distributor}</Text>
                 </View>
               </View>
             </View>
@@ -328,7 +329,7 @@ export default function PlayMusicUI({ route }) {
           </ScrollView>
           <View key="2" style={styles.page}>
             <View style={styles.imageContainer}>
-              <Animated.Image style={[styles.image, animatedStyle]} source={{ uri: music.thumbnailM }} />
+              <Animated.Image style={[styles.image, animatedStyle]} source={{ uri: music?.data?.thumbnailM }} />
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <FontAwesome6 name="share-square" size={wp(6)} color="#A9A9A9" />
@@ -339,7 +340,7 @@ export default function PlayMusicUI({ route }) {
                   maxWidth={wp(70)}
                   style={{ fontSize: wp(5), fontWeight: 'bold', color: 'white', marginBottom: wp(2) }}
                 >
-                  {music.title}
+                  {music?.data?.title}
                 </Text>
                 <Text
                   style={styles.artistsText}
@@ -347,9 +348,9 @@ export default function PlayMusicUI({ route }) {
                   ellipsizeMode="tail" // Thêm dấu ba chấm ở cuối nếu vượt quá chiều rộng
                   maxWidth={wp(70)}
                 >
-                  {Array.isArray(music.artists) && music.artists.length > 0
-                    ? music.artists.reduce((acc, artist, index) => {
-                        return acc + artist.name + (index < music.artists.length - 1 ? ', ' : '');
+                  {Array.isArray(music?.data?.artists) && music?.data?.artists.length > 0
+                    ? music?.data?.artists.reduce((acc, artist, index) => {
+                        return acc + artist.name + (index < music?.data?.artists.length - 1 ? ', ' : '');
                       }, '')
                     : 'Unknown Artist'}{' '}
                 </Text>
@@ -359,11 +360,11 @@ export default function PlayMusicUI({ route }) {
           </View>
           <View key="3" style={styles.page}>
             <View style={styles.infoHeader}>
-              <Image style={styles.thumbnail} source={{ uri: music.thumbnail }} />
+              <Image style={styles.thumbnail} source={{ uri: music?.data?.thumbnail }} />
               <View style={{ justifyContent: 'center' }}>
                 <View style={{ flexDirection: 'row' }}>
                   <Text style={{ ...styles.titleText, marginBottom: wp(2) }} numberOfLines={2} ellipsizeMode="tail">
-                    {music.title}
+                    {music?.data?.title}
                   </Text>
                   {music?.previewInfo ? (
                     <View
@@ -383,9 +384,9 @@ export default function PlayMusicUI({ route }) {
                   )}
                 </View>
                 <Text style={styles.artistsText} numberOfLines={3} ellipsizeMode="tail">
-                  {Array.isArray(music.artists) && music.artists.length > 0
+                  {Array.isArray(music?.data?.artists) && music?.data?.artists.length > 0
                     ? music?.artists?.reduce((acc, artist, index) => {
-                        return acc + artist.name + (index < music.artists.length - 1 ? ', ' : '');
+                        return acc + artist.name + (index < music?.data?.artists.length - 1 ? ', ' : '');
                       }, '')
                     : 'Unknown Artist'}
                 </Text>
@@ -505,7 +506,7 @@ const styles = StyleSheet.create({
   Container: {
     flex: 1,
     paddingHorizontal: wp(4),
-    paddingTop: hp('6.5%'),
+    paddingTop: hp('5.5%'),
   },
   pagerView: {
     height: hp(60),

@@ -55,3 +55,22 @@ export const formatDate = () => {
   const formattedDate = `${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()}`;
   return formattedDate;
 };
+
+// format seconds
+export const convertSecondsToTime = (seconds) => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = seconds % 60;
+
+  return `${hours} giờ ${minutes} phút`;
+};
+// format number
+export const formatNumber = (num) => {
+  if (num >= 1000000) {
+    return (num / 1000000).toFixed(1) + 'M';
+  } else if (num >= 1000) {
+    return (num / 1000).toFixed(1) + 'K';
+  } else {
+    return num.toString();
+  }
+};

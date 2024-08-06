@@ -1,100 +1,127 @@
+import { AntDesign, Entypo, Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useState } from 'react';
 import {
-  Text,
-  StyleSheet,
-  View,
-  ScrollView,
-  ImageBackground,
-  TouchableOpacity,
-  Image,
   FlatList,
+  Image,
+  ImageBackground,
   RefreshControl,
-  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { Feather, AntDesign, Entypo } from '@expo/vector-icons';
-import { loadDataPlayList, loadDataHome, loadTop100 } from '../CallAPI/mp3API';
-import { LinearGradient } from 'expo-linear-gradient';
-import LoadingIndicator from '../component/loadingIndicator';
 import Svg, {
-  Defs,
-  LinearGradient as SvgLinearGradient,
-  Stop,
-  Text as SvgText,
   ClipPath,
+  Defs,
   Rect,
+  Stop,
+  LinearGradient as SvgLinearGradient,
+  Text as SvgText,
 } from 'react-native-svg';
+import LoadingIndicator from '../component/loadingIndicator';
 
-import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
-import { formatRelativeTime, shuffleArray, formatDate } from '../component/library';
+import { heightPercentageToDP as hp, widthPercentageToDP as wp } from 'react-native-responsive-screen';
+import { formatDate, formatRelativeTime, shuffleArray } from '../component/library';
 
 import { toggleToPlayMusicUI } from '../component/remote';
 
 import { useNavigation } from '@react-navigation/native';
 
-import { setDataPlaylist, setTitlePlaylist, loadPlayList } from '../redux/soundSlice';
-import { useSelector, useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { loadDataHome, setLoading } from '../redux/soundHomeDataSlice';
 
+import { loadPlayList, setDataPlaylist, setTitlePlaylist } from '../redux/soundSlice';
 export default function KhamPhaUI() {
-  const [dataHome, setDataHome] = useState([]);
   const [dataHomeBaner, setDataHomeBaner] = useState([]);
-  const [dataHomeNew, setDataHomeNew] = useState({});
+  const [dataHomeNewRelease, setDataHomeNewRelease] = useState({});
   const [genreNew, setGenreNew] = useState('all');
   const [chart, setChart] = useState();
-  const [loading, setLoading] = useState(true); // Trạng thái loading
   const [refreshing, setRefreshing] = useState(false); // Trạng thái làm mới
   const [dataHomeRadio, setDataHomeRadio] = useState([]);
   const [dataTopWeek, setDataTopWeek] = useState([]);
   const [dataNewReleaseChart, setDataNewReleaseChart] = useState([]);
   const [dataRandom, setDataRandom] = useState([]);
   const [combinedData, setCombinedData] = useState([]);
-  const [idMusic, setIdMusic] = useState('');
-  const [textTitle, setTextTitle] = useState('');
+
   const date = formatDate();
   const dispatch = useDispatch();
-  const toPlayMusicUI = toggleToPlayMusicUI();
+
   const navigation = useNavigation();
 
+  const dataHome = useSelector((state) => state.soundHome.dataHome);
+  const loading = useSelector((state) => state.soundHome.isLoading);
+
+  const toPlayMusicUI = toggleToPlayMusicUI();
   const toggleToZingChart = () => {
     navigation.navigate('#ZingChart');
   };
 
   const loadData = async () => {
     try {
-      const dataHome = await loadDataHome();
+      dispatch(setLoading(true));
+      let newRelease = [];
+      let banner = [];
+      let rtChart = [];
+      let radio = {};
+      let topWeek = {};
+      let newReleaseChart = {};
 
-      dataHome.data.items.forEach((item) => {
-        if (item.sectionType === 'new-release') {
-          setDataHomeNew(item.items);
-        } else if (item.sectionType === 'banner') {
-          setDataHomeBaner(item.items);
-        } else if (item.sectionType === 'RTChart') {
-          setChart(item.items);
-        } else if (item.sectionType === 'livestream') {
-          setDataHomeRadio(item);
-        } else if (item.sectionType === 'weekChart') {
-          setDataTopWeek(item);
-        } else if (item.sectionType === 'newReleaseChart') {
-          setDataNewReleaseChart(item);
+      dataHome?.data?.items.forEach((item) => {
+        switch (item.sectionType) {
+          case 'new-release':
+            newRelease = item.items;
+            break;
+          case 'banner':
+            banner = item.items;
+            break;
+          case 'RTChart':
+            rtChart = item.items;
+            break;
+          case 'livestream':
+            radio = item;
+            break;
+          case 'weekChart':
+            topWeek = item;
+            break;
+          case 'newReleaseChart':
+            newReleaseChart = item;
+            break;
+          default:
+            break;
         }
       });
-      setDataHome(dataHome);
+
+      // Cập nhật trạng thái một lần duy nhất
+      setDataHomeNewRelease(newRelease);
+      setDataHomeBaner(banner);
+      setChart(rtChart);
+      setDataHomeRadio(radio);
+      setDataTopWeek(topWeek);
+      setDataNewReleaseChart(newReleaseChart);
+      dispatch(setLoading(false));
     } catch (error) {
       console.error(error);
-    } finally {
-      setLoading(false); // Set loading to false after data fetching
     }
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    dispatch(loadDataHome());
+  }, [dispatch]);
 
   useEffect(() => {
-    if (dataHomeNew) {
-      const newCombinedData = [...(dataHomeNew['others'] || []), ...(dataHomeNew['vPop'] || [])];
+    if (dataHome?.data?.items) {
+      loadData();
+    }
+  }, [dataHome]);
+
+  useEffect(() => {
+    if (dataHomeNewRelease) {
+      const newCombinedData = [...(dataHomeNewRelease['others'] || []), ...(dataHomeNewRelease['vPop'] || [])];
       setCombinedData(newCombinedData);
     }
-  }, [dataHomeNew]);
+  }, [dataHomeNewRelease]);
 
   const [flag, setFlag] = useState(false);
 
@@ -108,7 +135,8 @@ export default function KhamPhaUI() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadData(); // Gọi hàm loadData để làm mới dữ liệu
+    dispatch(loadDataHome());
+    loadData();
     setRefreshing(false);
   };
 
@@ -131,7 +159,7 @@ export default function KhamPhaUI() {
     navigation.navigate('PlayListSoundUI');
   };
 
-  return loading ? (
+  return loading || refreshing ? (
     <LoadingIndicator></LoadingIndicator>
   ) : (
     <View style={styles.Container}>
@@ -188,8 +216,8 @@ export default function KhamPhaUI() {
                   renderItem={({ item }) => (
                     <TouchableOpacity
                       onPress={() => {
-                        dispatch(setDataPlaylist(combinedData));
-                        dispatch(setTitlePlaylist('Bài hát gợi ý'));
+                        // dispatch(setDataPlaylist(combinedData));
+                        // dispatch(setTitlePlaylist('Bài hát gợi ý'));
                         toPlayMusicUI(item.encodeId);
                       }}
                       style={styles.itemContainer}
@@ -290,7 +318,7 @@ export default function KhamPhaUI() {
 
           <View>
             <FlatList
-              data={getDataChunks(dataHomeNew[genreNew] || [], 3)}
+              data={getDataChunks(dataHomeNewRelease[genreNew] || [], 3)}
               horizontal
               showsHorizontalScrollIndicator={false}
               keyExtractor={(item, index) => index.toString()}
@@ -303,8 +331,8 @@ export default function KhamPhaUI() {
                   renderItem={({ item }) => (
                     <TouchableOpacity
                       onPress={() => {
-                        dispatch(setDataPlaylist(dataHomeNew[genreNew]));
-                        dispatch(setTitlePlaylist('Mới phát hành'));
+                        // dispatch(setDataPlaylist(dataHomeNewRelease[genreNew]));
+                        // dispatch(setTitlePlaylist('Mới phát hành'));
                         toPlayMusicUI(item.encodeId);
                       }}
                       style={styles.itemContainer}
@@ -398,8 +426,8 @@ export default function KhamPhaUI() {
               {chart?.slice(0, 5).map((item, index) => (
                 <TouchableOpacity
                   onPress={() => {
-                    dispatch(setDataPlaylist(chart));
-                    dispatch(setTitlePlaylist('#ZingChart'));
+                    // dispatch(setDataPlaylist(chart));
+                    // dispatch(setTitlePlaylist('#ZingChart'));
                     toPlayMusicUI(item.encodeId);
                   }}
                   key={index}
@@ -458,6 +486,7 @@ export default function KhamPhaUI() {
                     <TouchableOpacity
                       onPress={() => {
                         dispatch(loadPlayList(item.encodeId));
+                        dispatch(setTitlePlaylist(item.title));
                         togglePlaylistMuic();
                       }}
                       key={item.encodeId || itemIndex}

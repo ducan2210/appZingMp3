@@ -1,5 +1,4 @@
-// SoundContext.js
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 
 const SoundContext = createContext();
 
@@ -8,6 +7,7 @@ export const SoundProvider = ({ children }) => {
   const [isPlaying, setIsPlaying] = useState(true);
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
+  const soundRef = useRef(sound);
 
   const playPauseHandler = async () => {
     if (sound) {
@@ -21,6 +21,10 @@ export const SoundProvider = ({ children }) => {
   };
 
   useEffect(() => {
+    soundRef.current = sound;
+  }, [sound]);
+
+  useEffect(() => {
     const handlePlaybackStatusUpdate = (status) => {
       if (status.isLoaded) {
         setPosition(status.positionMillis);
@@ -28,9 +32,16 @@ export const SoundProvider = ({ children }) => {
       }
     };
 
-    if (sound) {
-      sound.setOnPlaybackStatusUpdate(handlePlaybackStatusUpdate);
+    const currentSound = soundRef.current;
+    if (currentSound) {
+      currentSound.setOnPlaybackStatusUpdate(handlePlaybackStatusUpdate);
     }
+
+    return () => {
+      if (currentSound) {
+        currentSound.setOnPlaybackStatusUpdate(null);
+      }
+    };
   }, [sound]);
 
   return (

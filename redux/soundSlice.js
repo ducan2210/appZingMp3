@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'http://192.168.1.186:3000/api';
 
 export const loadPlayList = createAsyncThunk('sound/loadPlayList', async (idPlaylist, thunkAPI) => {
   try {
@@ -12,11 +12,23 @@ export const loadPlayList = createAsyncThunk('sound/loadPlayList', async (idPlay
   }
 });
 
+export const loadSoundData = createAsyncThunk('sound/loadSoundData', async (idMusic, thunkAPI) => {
+  try {
+    const response = await axios.get(`${API_URL}/songInfo/${idMusic}}`);
+    return response.data;
+  } catch (error) {
+    console.log('erro', error);
+    return error;
+  }
+});
+
 export const soundSlice = createSlice({
   name: 'sound',
   initialState: {
     dataPlaylist: {},
+    soundData: {},
     titlePlaylist: '',
+    isLoading: true,
   },
   reducers: {
     setDataPlaylist: (state, action) => {
@@ -28,7 +40,14 @@ export const soundSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder.addCase(loadPlayList.fulfilled, (state, action) => {
+      state.isLoading = false;
       state.dataPlaylist = action.payload;
+    });
+    builder.addCase(loadPlayList.pending, (state, action) => {
+      state.isLoading = true;
+    });
+    builder.addCase(loadSoundData.fulfilled, (state, action) => {
+      state.soundData = action.payload;
     });
   },
 });

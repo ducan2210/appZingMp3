@@ -18,9 +18,13 @@ import { Feather, AntDesign, Entypo } from '@expo/vector-icons';
 import LoadingIndicator from '../component/loadingIndicator';
 
 import { LineChart } from 'react-native-chart-kit';
-
+import { useDispatch } from 'react-redux';
+import { setDataPlaylist, setTitlePlaylist } from '../redux/soundSlice';
+import { toggleToPlayMusicUI } from '../component/remote';
 export default function ZingChartUI() {
   const [dataHome, setDataHome] = useState([]);
+  const toPlayMusicUI = toggleToPlayMusicUI();
+  const dispatch = useDispatch();
   const [chart, setChart] = useState();
   const date = formatDate();
   const [loading, setLoading] = useState(true); // Trạng thái loading
@@ -283,7 +287,15 @@ export default function ZingChartUI() {
         {!showAll ? (
           <View>
             {chart?.items?.slice(0, 20).map((item, index) => (
-              <TouchableOpacity key={index} style={{ flexDirection: 'row', marginBottom: hp('2%') }}>
+              <TouchableOpacity
+                onPress={() => {
+                  dispatch(setDataPlaylist(chart));
+                  dispatch(setTitlePlaylist('#ZingChart'));
+                  toPlayMusicUI(item.encodeId);
+                }}
+                key={index}
+                style={{ flexDirection: 'row', marginBottom: hp('2%') }}
+              >
                 <View>
                   <Image
                     style={{ height: wp('15%'), width: wp('15%'), borderRadius: 5 }}
