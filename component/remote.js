@@ -31,3 +31,13 @@ export const toggleToZingChart = () => {
 
   return toggleToZingChart;
 };
+
+export const toggleToArtistInfo = () => {
+  const navigation = useNavigation();
+
+  const toggleToZingChart = () => {
+    navigation.navigate('ArtistUI');
+  };
+
+  return toggleToZingChart;
+};

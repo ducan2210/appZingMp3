@@ -37,7 +37,7 @@ export default function KhamPhaUI() {
   const [dataHomeBaner, setDataHomeBaner] = useState([]);
   const [dataHomeNewRelease, setDataHomeNewRelease] = useState({});
   const [genreNew, setGenreNew] = useState('all');
-  const [chart, setChart] = useState();
+  const [chart, setChart] = useState([]);
   const [refreshing, setRefreshing] = useState(false); // Trạng thái làm mới
   const [dataHomeRadio, setDataHomeRadio] = useState([]);
   const [dataTopWeek, setDataTopWeek] = useState([]);
@@ -216,8 +216,8 @@ export default function KhamPhaUI() {
                   renderItem={({ item }) => (
                     <TouchableOpacity
                       onPress={() => {
-                        // dispatch(setDataPlaylist(combinedData));
-                        // dispatch(setTitlePlaylist('Bài hát gợi ý'));
+                        dispatch(setDataPlaylist(combinedData));
+                        dispatch(setTitlePlaylist('Bài hát gợi ý'));
                         toPlayMusicUI(item.encodeId);
                       }}
                       style={styles.itemContainer}
@@ -331,8 +331,8 @@ export default function KhamPhaUI() {
                   renderItem={({ item }) => (
                     <TouchableOpacity
                       onPress={() => {
-                        // dispatch(setDataPlaylist(dataHomeNewRelease[genreNew]));
-                        // dispatch(setTitlePlaylist('Mới phát hành'));
+                        dispatch(setDataPlaylist(dataHomeNewRelease[genreNew]));
+                        dispatch(setTitlePlaylist('Mới phát hành'));
                         toPlayMusicUI(item.encodeId);
                       }}
                       style={styles.itemContainer}
@@ -426,8 +426,8 @@ export default function KhamPhaUI() {
               {chart?.slice(0, 5).map((item, index) => (
                 <TouchableOpacity
                   onPress={() => {
-                    // dispatch(setDataPlaylist(chart));
-                    // dispatch(setTitlePlaylist('#ZingChart'));
+                    dispatch(setDataPlaylist(chart));
+                    dispatch(setTitlePlaylist('#ZingChart'));
                     toPlayMusicUI(item.encodeId);
                   }}
                   key={index}

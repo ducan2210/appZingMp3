@@ -24,6 +24,7 @@ export default function PlayMusicUI({ route }) {
   const [selectedPage, setSelectedPage] = useState(0);
 
   const toggleBackHome = toggleGoBack();
+
   const [idSound, setIdSound] = useState(id);
   const { sound, setSound, isPlaying, setIsPlaying, playPauseHandler, position, duration } = useSound();
   const [lyric, setLyric] = useState([]);
@@ -71,17 +72,18 @@ export default function PlayMusicUI({ route }) {
       const dataRecommend = await loadMusicRecommend(idSound);
       // setMusic(datamusic?.data?.data);
       setMusicRecommend(dataRecommend.data);
-      const loadSound = await loadSoundNor(idSound);
+
       const loadLy = await loadLyric(idSound);
       setLyric(loadLy);
+      const loadSound = await loadSoundNor(idSound);
 
       if (music?.data?.previewInfo) {
         const loadSoundPre = await loadSoundPremium(idSound);
-        const { sound: newSound } = await Audio.Sound.createAsync({ uri: loadSoundPre.data.link });
+        const { sound: newSound } = await Audio.Sound.createAsync({ uri: loadSoundPre?.data?.link });
         setSound(newSound);
         setIsPlaying(true);
       } else {
-        const { sound: newSound } = await Audio.Sound.createAsync({ uri: loadSound.data[128] });
+        const { sound: newSound } = await Audio.Sound.createAsync({ uri: loadSound?.data[128] });
         setSound(newSound);
         setIsPlaying(true);
       }

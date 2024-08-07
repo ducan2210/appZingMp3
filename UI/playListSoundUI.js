@@ -5,16 +5,18 @@ import { heightPercentageToDP as hp, widthPercentageToDP as wp } from 'react-nat
 import { useDispatch, useSelector } from 'react-redux';
 import { convertSecondsToTime, formatNumber } from '../component/library';
 import LoadingIndicator from '../component/loadingIndicator';
-import { toggleGoBack, toggleToPlayMusicUI } from '../component/remote';
+import { toggleGoBack, toggleToPlayMusicUI, toggleToArtistInfo } from '../component/remote';
+import { loadDataArtist } from '../redux/artistSlice';
 export default function PlayListSoundUI() {
   const playListData = useSelector((state) => state.sound.dataPlaylist);
   const playListTitle = useSelector((state) => state.sound.titlePlaylist);
   const isLoading = useSelector((state) => state.sound.isLoading);
   const toPlayMusicUI = toggleToPlayMusicUI();
   const toggleBackView = toggleGoBack();
+  const toggleToArtist = toggleToArtistInfo();
 
+  const dispatch = useDispatch();
   const scrollY = useRef(new Animated.Value(0)).current;
-
   const titleOpacity = scrollY.interpolate({
     inputRange: [hp(30), hp(50)],
     outputRange: [0, 1],
@@ -189,6 +191,10 @@ export default function PlayListSoundUI() {
                 <TouchableOpacity
                   key={index}
                   style={{ flexDirection: 'column', marginLeft: wp(3), alignItems: 'center' }}
+                  onPress={() => {
+                    dispatch(loadDataArtist(artist.alias));
+                    toggleToArtist();
+                  }}
                 >
                   <Image
                     style={{ height: wp(40), width: wp(40), borderRadius: wp(100) }}
