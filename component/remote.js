@@ -41,3 +41,13 @@ export const toggleToArtistInfo = () => {
 
   return toggleToZingChart;
 };
+
+export const togglePlaylistMuic = () => {
+  const navigation = useNavigation();
+
+  const toggleToZingChart = () => {
+    navigation.navigate('PlayListSoundUI');
+  };
+
+  return toggleToZingChart;
+};

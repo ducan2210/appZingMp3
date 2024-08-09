@@ -25,8 +25,15 @@ export const formatRelativeTime = (unixTimestamp) => {
 
 //chuyển đổi timestamp
 export const formatDateRelativeTime = (timestamp) => {
-  const date = new Date(timestamp); // Tạo một đối tượng Date từ timestamp
-
+  if (!timestamp) {
+    return ''; // Trả về chuỗi trống nếu timestamp không hợp lệ
+  }
+  let date;
+  if (timestamp.length > 10) {
+    date = new Date(timestamp / 1000); // Tạo một đối tượng Date từ timestamp
+  } else {
+    date = new Date(timestamp); // Tạo một đối tượng Date từ timestamp
+  }
   // Lấy các thành phần ngày, tháng, năm
   const day = date.getDate();
   const month = date.getMonth() + 1; // Tháng được tính từ 0-11, nên cần cộng thêm 1
@@ -66,6 +73,10 @@ export const convertSecondsToTime = (seconds) => {
 };
 // format number
 export const formatNumber = (num) => {
+  if (num === undefined || num === null || isNaN(num)) {
+    return '0'; // hoặc một giá trị mặc định khác
+  }
+
   if (num >= 1000000) {
     return (num / 1000000).toFixed(1) + 'M';
   } else if (num >= 1000) {

@@ -1,24 +1,155 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Text, View, TouchableOpacity, StyleSheet, ImageBackground, ScrollView, Image, Animated } from 'react-native';
-import { useSelector } from 'react-redux';
+
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import { AntDesign, Entypo } from '@expo/vector-icons';
 import { toggleGoBack } from '../component/remote';
-import { formatNumber } from '../component/library';
+import { formatNumber, formatDateRelativeTime } from '../component/library';
+import { toggleToPlayMusicUI, toggleToArtistInfo, togglePlaylistMuic } from '../component/remote';
 import HTMLView from 'react-native-htmlview';
+import { useDispatch, useSelector } from 'react-redux';
+import { loadDataArtist } from '../redux/artistSlice';
+import LoadingIndicator from '../component/loadingIndicator';
+import { setTitlePlaylist, loadPlayList } from '../redux/soundSlice';
 
 export default function ArtistUI() {
+  const dispatch = useDispatch();
   const artist = useSelector((state) => state.artist.artistData);
   const toggleBackView = toggleGoBack();
-  const [songList, setSongList] = useState([]);
   const scrollY = useRef(new Animated.Value(0)).current;
-
   const [isExpanded, setIsExpanded] = useState(false);
+  const toPlayMusicUI = toggleToPlayMusicUI();
+  const toggleToArtist = toggleToArtistInfo();
+  const toggleToPlayList = togglePlaylistMuic();
+  const loading = useSelector((state) => state.artist.loading);
+  const RenderByGenre = () => {
+    const sectionsToRender = [];
+
+    if (artist?.data?.sections) {
+      for (let i = 0; i < artist.data.sections.length; i++) {
+        if (artist.data.sections[i]?.sectionType === 'playlist') {
+          sectionsToRender.push(
+            <View key={`playlist-${i}`}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>{artist?.data?.sections[i]?.title}</Text>
+              </View>
+
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: wp(4) }}>
+                {artist?.data?.sections[i]?.items.map((item, index) => (
+                  <TouchableOpacity
+                    onPress={() => {
+                      dispatch(loadPlayList(item.encodeId));
+                      dispatch(setTitlePlaylist(item.title));
+                      toggleToPlayList();
+                    }}
+                    key={index}
+                    style={{ flexDirection: 'column', width: wp(43), marginRight: wp(3) }}
+                  >
+                    <Image
+                      style={{ height: wp(43), width: wp(43), borderRadius: wp(3), overflow: 'hidden' }}
+                      source={{ uri: item.thumbnail }}
+                    />
+                    <View style={{ flex: 1, justifyContent: 'center', marginTop: wp(2) }}>
+                      <Text
+                        numberOfLines={2}
+                        ellipsizeMode="tail"
+                        style={{ color: 'white', fontSize: wp('4'), fontWeight: '500' }}
+                      >
+                        {item.title}
+                      </Text>
+                      <View style={{ flexDirection: 'row', marginTop: wp('1.5'), alignItems: 'center' }}>
+                        <Text numberOfLines={1} ellipsizeMode="tail" style={{ color: 'grey', fontSize: wp('4') }}>
+                          {formatDateRelativeTime(item.releasedAt)}
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>,
+          );
+        } else if (artist.data.sections[i]?.sectionType === 'video') {
+          sectionsToRender.push(
+            <View key={`video-${i}`}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>{artist?.data?.sections[i]?.title}</Text>
+              </View>
+
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: wp(4) }}>
+                {artist?.data?.sections[i]?.items.map((item, index) => (
+                  <TouchableOpacity key={index} style={{ flexDirection: 'column', width: wp(80), marginRight: wp(3) }}>
+                    <Image
+                      style={{ height: wp(43), width: wp(80), borderRadius: wp(3), overflow: 'hidden' }}
+                      source={{ uri: item.thumbnailM }}
+                    />
+                    <View style={{ flex: 1, justifyContent: 'center', marginTop: wp(2) }}>
+                      <Text
+                        numberOfLines={2}
+                        ellipsizeMode="tail"
+                        style={{ color: 'white', fontSize: wp('4'), fontWeight: '500' }}
+                      >
+                        {item.title}
+                      </Text>
+                      <View style={{ flexDirection: 'row', marginTop: wp('1.5'), alignItems: 'center' }}>
+                        <Text style={styles.artistsText} numberOfLines={1} ellipsizeMode="tail">
+                          {item.artists.reduce((acc, artist, index) => {
+                            return acc + artist.name + (index < item.artists.length - 1 ? ', ' : '');
+                          }, '')}
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>,
+          );
+        } else if (artist.data.sections[i]?.sectionType === 'artist') {
+          sectionsToRender.push(
+            <View key={`video-${i}`}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>{artist?.data?.sections[i]?.title}</Text>
+              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={{ flexDirection: 'row', marginTop: wp(3) }}
+              >
+                {artist?.data?.sections[i]?.items.map((artist, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={{ flexDirection: 'column', marginRight: wp(3), alignItems: 'center' }}
+                    onPress={() => {
+                      dispatch(loadDataArtist(artist.alias));
+                      toggleToArtist();
+                    }}
+                  >
+                    <Image
+                      style={{ height: wp(40), width: wp(40), borderRadius: wp(100) }}
+                      source={{ uri: artist.thumbnail }}
+                    />
+                    <Text style={{ marginVertical: wp(2), color: 'white', fontSize: wp(3.7), fontWeight: '600' }}>
+                      {artist.name}
+                    </Text>
+                    <Text style={{ marginBottom: wp(4), color: '#A9A9A9', fontSize: wp(3.7), fontWeight: '600' }}>
+                      {formatNumber(artist.totalFollow)} quan tâm
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>,
+          );
+        }
+      }
+    }
+
+    // Nếu không có dữ liệu, trả về một view trống
+    return sectionsToRender.length > 0 ? sectionsToRender : <></>;
+  };
 
   // Hàm để cắt bớt văn bản sau 3 dòng
   const truncateText = (text) => {
-    const lines = text.split('\n');
-    return lines.slice(0, 1).join('\n');
+    const lines = text?.split('\n');
+    return lines?.slice(0, 1).join('\n');
   };
 
   // Nội dung để hiển thị
@@ -42,7 +173,9 @@ export default function ArtistUI() {
 
   useEffect(() => {}, [artist]);
 
-  return (
+  return loading ? (
+    <LoadingIndicator></LoadingIndicator>
+  ) : (
     <View style={{ backgroundColor: 'black', flex: 1 }}>
       <Animated.View
         style={[
@@ -85,7 +218,7 @@ export default function ArtistUI() {
                   flex: 1,
                 }}
               >
-                <Text style={{ color: 'white', fontWeight: '500' }}>QUAN TÂM</Text>
+                <Text style={{ color: 'white', fontWeight: '700' }}>QUAN TÂM</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={{
@@ -99,7 +232,7 @@ export default function ArtistUI() {
                   backgroundColor: '#9c4de0',
                 }}
               >
-                <Text style={{ color: 'white', fontWeight: '500' }}>QUAN TÂM</Text>
+                <Text style={{ color: 'white', fontWeight: '700' }}>PHÁT NHẠC</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -119,6 +252,7 @@ export default function ArtistUI() {
                 alignItems: 'center',
               }}
               onPress={() => {
+                dispatch(setTitlePlaylist(artist?.data?.name));
                 toPlayMusicUI(item.encodeId);
               }}
             >
@@ -191,14 +325,16 @@ export default function ArtistUI() {
               borderRadius: wp(10),
               alignItems: 'center',
               justifyContent: 'center',
-              marginVertical: wp(5),
+              marginTop: wp(5),
               width: wp(40),
               alignSelf: 'center',
             }}
           >
             <Text style={{ color: 'white', fontSize: wp(3), fontWeight: 'bold' }}>XEM THÊM</Text>
           </TouchableOpacity>
-          <View style={{}}>
+
+          <RenderByGenre></RenderByGenre>
+          <View style={{ marginTop: wp(5) }}>
             <Text style={styles.sectionTitle}>Thông tin</Text>
 
             <View
@@ -279,7 +415,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   sectionHeader: {
-    marginTop: hp(3),
+    marginTop: hp(2),
     flexDirection: 'row',
     alignItems: 'center',
   },

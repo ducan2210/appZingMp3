@@ -16,10 +16,15 @@ export const artistSlice = createSlice({
   name: 'artist',
   initialState: {
     artistData: {},
+    loading: true,
   },
   extraReducers: (builder) => {
     builder.addCase(loadDataArtist.fulfilled, (state, action) => {
       state.artistData = action.payload;
+      state.loading = false;
+    });
+    builder.addCase(loadDataArtist.pending, (state, action) => {
+      state.loading = true;
     });
   },
 });

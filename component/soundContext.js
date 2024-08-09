@@ -4,6 +4,7 @@ const SoundContext = createContext();
 
 export const SoundProvider = ({ children }) => {
   const [sound, setSound] = useState(null);
+  const [music, setMusic] = useState(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -45,7 +46,9 @@ export const SoundProvider = ({ children }) => {
   }, [sound]);
 
   return (
-    <SoundContext.Provider value={{ sound, setSound, playPauseHandler, position, duration, isPlaying, setIsPlaying }}>
+    <SoundContext.Provider
+      value={{ sound, setSound, music, setMusic, playPauseHandler, position, duration, isPlaying, setIsPlaying }}
+    >
       {children}
     </SoundContext.Provider>
   );

@@ -16,7 +16,7 @@ export const loadSoundData = createAsyncThunk('soundControl/loadSoundData', asyn
 export const soundControlSlice = createSlice({
   name: 'soundControl',
   initialState: {
-    soundData: [],
+    soundData: {},
     isPlaying: true,
     position: 0,
     duration: 0,
@@ -28,6 +28,9 @@ export const soundControlSlice = createSlice({
     setDuration: (state, action) => {
       state.duration = action.payload;
     },
+    setSoundData: (state, action) => {
+      state.soundData = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(loadSoundData.fulfilled, (state, action) => {
@@ -36,5 +39,5 @@ export const soundControlSlice = createSlice({
   },
 });
 
-export const { setPosition, setDuration } = soundControlSlice.actions;
+export const { setPosition, setDuration, setSoundData } = soundControlSlice.actions;
 export default soundControlSlice.reducer;

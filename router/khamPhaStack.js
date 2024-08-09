@@ -10,8 +10,8 @@ const KhamPhaStack = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="KhamPhaUI" component={KhamPhaUI} />
-      <Stack.Screen name="ArtistUI" component={ArtistUI} />
       <Stack.Screen name="PlayListSoundUI" component={PlayListSoundUI} />
+      <Stack.Screen name="ArtistUI" component={ArtistUI} />
     </Stack.Navigator>
   );
 };
