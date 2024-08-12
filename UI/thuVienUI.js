@@ -4,9 +4,7 @@ import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-nat
 export default function ThuVienUI() {
   return (
     <View style={styles.Container}>
-      <View className="flex-1 items-center justify-center bg-black">
-        <Text className="text-white">Open up App.js to start working on your app!</Text>
-      </View>
+      <Text>con cac</Text>
     </View>
   );
 }

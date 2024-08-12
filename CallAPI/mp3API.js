@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://192.168.1.186:3000/api';
+const API_URL = 'http://192.168.100.232:3000/api';
 
 export const loadDataHome = async (page) => {
   try {
@@ -93,6 +93,16 @@ export const loadSoundPremium = async (id) => {
 export const loadLyric = async (id) => {
   try {
     const response = await axios.get(`${API_URL}/lyric/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('error', error);
+    throw error;
+  }
+};
+
+export const loadMV = async (idMV) => {
+  try {
+    const response = await axios.get(`${API_URL}/videoInfo/${idMV}`);
     return response.data;
   } catch (error) {
     console.error('error', error);

@@ -5,13 +5,14 @@ import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-nat
 import { AntDesign, Entypo } from '@expo/vector-icons';
 import { toggleGoBack } from '../component/remote';
 import { formatNumber, formatDateRelativeTime } from '../component/library';
-import { toggleToPlayMusicUI, toggleToArtistInfo, togglePlaylistMuic } from '../component/remote';
+import { toggleToPlayMusicUI, toggleToArtistInfo, togglePlaylistMuic, togglePlayMV } from '../component/remote';
 import HTMLView from 'react-native-htmlview';
 import { useDispatch, useSelector } from 'react-redux';
 import { loadDataArtist } from '../redux/artistSlice';
 import LoadingIndicator from '../component/loadingIndicator';
 import { setTitlePlaylist, loadPlayList } from '../redux/soundSlice';
-
+import { loadMV } from '../redux/mvSlice';
+import { setListMV } from '../redux/mvSlice';
 export default function ArtistUI() {
   const dispatch = useDispatch();
   const artist = useSelector((state) => state.artist.artistData);
@@ -21,6 +22,7 @@ export default function ArtistUI() {
   const toPlayMusicUI = toggleToPlayMusicUI();
   const toggleToArtist = toggleToArtistInfo();
   const toggleToPlayList = togglePlaylistMuic();
+  const toggleToMV = togglePlayMV();
   const loading = useSelector((state) => state.artist.loading);
   const RenderByGenre = () => {
     const sectionsToRender = [];
@@ -77,7 +79,15 @@ export default function ArtistUI() {
 
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: wp(4) }}>
                 {artist?.data?.sections[i]?.items.map((item, index) => (
-                  <TouchableOpacity key={index} style={{ flexDirection: 'column', width: wp(80), marginRight: wp(3) }}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      dispatch(loadMV(item.encodeId));
+                      dispatch(dispatch(setListMV(artist?.data?.sections[i]?.items)));
+                      toggleToMV();
+                    }}
+                    key={index}
+                    style={{ flexDirection: 'column', width: wp(80), marginRight: wp(3) }}
+                  >
                     <Image
                       style={{ height: wp(43), width: wp(80), borderRadius: wp(3), overflow: 'hidden' }}
                       source={{ uri: item.thumbnailM }}

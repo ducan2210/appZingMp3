@@ -3,12 +3,14 @@ import soundReducer from './soundSlice'; // Đảm bảo đường dẫn chính 
 import soundHomeDataReducer from './soundHomeDataSlice';
 import soundControlReducer from './soundControlSlice';
 import artistReducer from './artistSlice';
+import videoClipSlice from './mvSlice';
 const store = configureStore({
   reducer: {
     sound: soundReducer,
     soundHome: soundHomeDataReducer,
     soundControl: soundControlReducer,
     artist: artistReducer,
+    videoClip: videoClipSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

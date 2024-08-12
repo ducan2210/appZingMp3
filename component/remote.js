@@ -51,3 +51,13 @@ export const togglePlaylistMuic = () => {
 
   return toggleToZingChart;
 };
+
+export const togglePlayMV = () => {
+  const navigation = useNavigation();
+
+  const toggleToZingChart = () => {
+    navigation.navigate('MvUI');
+  };
+
+  return toggleToZingChart;
+};

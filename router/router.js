@@ -2,6 +2,7 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import ContainerRouter from './containerRouter';
 import PlayMusicUI from '../UI/playMusicUI';
+import MvUI from '../UI/mvUI';
 const Stack = createNativeStackNavigator();
 
 const Router = () => {
@@ -11,6 +12,11 @@ const Router = () => {
       <Stack.Screen
         name="PlayMusicUI"
         component={PlayMusicUI}
+        options={{ title: '', headerShown: false, animationTypeForReplace: 'push', gestureDirection: 'vertical' }}
+      />
+      <Stack.Screen
+        name="MvUI"
+        component={MvUI}
         options={{ title: '', headerShown: false, animationTypeForReplace: 'push', gestureDirection: 'vertical' }}
       />
     </Stack.Navigator>
