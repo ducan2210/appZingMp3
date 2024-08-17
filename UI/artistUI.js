@@ -10,7 +10,7 @@ import HTMLView from 'react-native-htmlview';
 import { useDispatch, useSelector } from 'react-redux';
 import { loadDataArtist } from '../redux/artistSlice';
 import LoadingIndicator from '../component/loadingIndicator';
-import { setTitlePlaylist, loadPlayList } from '../redux/soundSlice';
+import { setTitlePlaylist, loadPlayList, setDataPlaylist } from '../redux/soundSlice';
 import { loadMV } from '../redux/mvSlice';
 import { setListMV } from '../redux/mvSlice';
 export default function ArtistUI() {
@@ -82,7 +82,7 @@ export default function ArtistUI() {
                   <TouchableOpacity
                     onPress={() => {
                       dispatch(loadMV(item.encodeId));
-                      dispatch(dispatch(setListMV(artist?.data?.sections[i]?.items)));
+                      dispatch(setListMV(artist?.data?.sections[i]?.items));
                       toggleToMV();
                     }}
                     key={index}
@@ -262,6 +262,7 @@ export default function ArtistUI() {
                 alignItems: 'center',
               }}
               onPress={() => {
+                dispatch(setDataPlaylist(artist?.data?.sections[0]?.items));
                 dispatch(setTitlePlaylist(artist?.data?.name));
                 toPlayMusicUI(item.encodeId);
               }}

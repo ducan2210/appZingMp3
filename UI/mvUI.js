@@ -20,18 +20,19 @@ import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import { convertSeconds } from '../component/library';
 import { Video } from 'expo-av';
 import { toggleToPlayMusicUI } from '../component/remote';
+import { loadMV, setListMV } from '../redux/mvSlice';
 
 export default function MvUI() {
   const toPlayMusicUI = toggleToPlayMusicUI();
   const videoInfo = useSelector((state) => state.videoClip.videoInfo);
   const loading = useSelector((state) => state.videoClip.loading);
   const listVideo = useSelector((state) => state.videoClip.listMV);
-  const [selectedTab, setSelectedTab] = useState('Đề xuất');
   const [autoPlay, setAutoPlay] = useState(true);
+  const dispatch = useDispatch();
   const toggleBackView = toggleGoBack();
-  //   useEffect(() => {
-  //     console.log(listVideo);
-  //   }, [listVideo]);
+  useEffect(() => {
+    console.log(listVideo);
+  }, [listVideo]);
   const videoRef = useRef(null); // Tạo ref cho video
   const [isPlaying, setIsPlaying] = useState(true); // Quản lý trạng thái video
 
@@ -76,6 +77,9 @@ export default function MvUI() {
                   marginBottom: wp(3),
                 }}
                 key={index}
+                onPress={() => {
+                  dispatch(loadMV(item.encodeId));
+                }}
               >
                 <View
                   style={{
@@ -147,6 +151,9 @@ export default function MvUI() {
                   marginBottom: wp(3),
                 }}
                 key={index}
+                onPress={() => {
+                  dispatch(loadMV(item.encodeId));
+                }}
               >
                 <View
                   style={{

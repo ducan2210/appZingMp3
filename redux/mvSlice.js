@@ -22,6 +22,9 @@ export const videoClipSlice = createSlice({
     setListMV: (state, action) => {
       state.listMV = action.payload;
     },
+    setMV: (state, action) => {
+      state.videoInfo = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(loadMV.fulfilled, (state, action) => {
@@ -34,5 +37,5 @@ export const videoClipSlice = createSlice({
   },
 });
 
-export const { setListMV } = videoClipSlice.actions;
+export const { setListMV, setMV } = videoClipSlice.actions;
 export default videoClipSlice.reducer;

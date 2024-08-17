@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Text, View, StyleSheet, ImageBackground, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { heightPercentageToDP as hp, widthPercentageToDP as wp } from 'react-native-responsive-screen';
-import { Feather, AntDesign, Entypo, FontAwesome5, FontAwesome6, FontAwesome } from '@expo/vector-icons';
+import { Feather, AntDesign, Entypo, FontAwesome5, FontAwesome6, FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import { loadDataMusic, loadMusicRecommend, loadSoundPremium, loadSoundNor, loadLyric } from '../CallAPI/mp3API';
 import { toggleGoBack } from '../component/remote';
 import LoadingIndicator from '../component/loadingIndicator';
@@ -18,55 +18,62 @@ import { useDispatch, useSelector } from 'react-redux';
 export default function PlayMusicUI({ route }) {
   const { id } = route.params || {};
   // const [music, setMusic] = useState([]);
+
+  // useEffect(() => {
+  //   console.log(dataPlaylist);
+  // }, [dataPlaylist]);
   const [musicRecommend, setMusicRecommend] = useState([]);
   const [loading, setLoading] = useState(true);
   const headderTitle = useSelector((state) => state.sound.titlePlaylist);
   const [selectedPage, setSelectedPage] = useState(0);
+  const [lyric, setLyric] = useState([]);
+  const [idSound, setIdSound] = useState(id);
+  const [random, setRandom] = useState(false);
+  const [repeat, setRepeat] = useState(0);
+  const dataPlaylist = useSelector((state) => state.sound.dataPlaylist);
+
+  const { sound, setSound, music, setMusic, isPlaying, setIsPlaying, playPauseHandler, position, duration } =
+    useSound();
 
   const toggleBackHome = toggleGoBack();
 
-  const [idSound, setIdSound] = useState(id);
-  const { sound, setSound, music, setMusic, isPlaying, setIsPlaying, playPauseHandler, position, duration } =
-    useSound();
-  const [lyric, setLyric] = useState([]);
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      // Gọi hàm loadDataMusic và đợi kết quả trả về
+      const musicData = await loadDataMusic(idSound);
+      // Gửi dữ liệu âm nhạc đến Redux store
+      setMusic(musicData.data);
+      if (sound) {
+        await sound.stopAsync();
+        await sound.unloadAsync();
+      }
+
+      const dataRecommend = await loadMusicRecommend(idSound);
+      // setMusic(datamusic?.data);
+      setMusicRecommend(dataRecommend.data);
+
+      const loadLy = await loadLyric(idSound);
+      setLyric(loadLy);
+
+      if (musicData?.data?.previewInfo) {
+        const loadSoundPre = await loadSoundPremium(idSound);
+        const { sound: newSound } = await Audio.Sound.createAsync({ uri: loadSoundPre?.data?.link });
+        setSound(newSound);
+        setIsPlaying(true);
+      } else {
+        const loadSound = await loadSoundNor(idSound);
+        const { sound: newSound } = await Audio.Sound.createAsync({ uri: loadSound?.data[128] });
+        setSound(newSound);
+        setIsPlaying(true);
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error('Error loading music data:', error);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        // Gọi hàm loadDataMusic và đợi kết quả trả về
-        const musicData = await loadDataMusic(idSound);
-        // Gửi dữ liệu âm nhạc đến Redux store
-        setMusic(musicData.data);
-        if (sound) {
-          await sound.stopAsync();
-          await sound.unloadAsync();
-        }
-
-        const dataRecommend = await loadMusicRecommend(idSound);
-        // setMusic(datamusic?.data);
-        setMusicRecommend(dataRecommend.data);
-
-        const loadLy = await loadLyric(idSound);
-        setLyric(loadLy);
-
-        if (musicData?.data?.previewInfo) {
-          const loadSoundPre = await loadSoundPremium(idSound);
-          const { sound: newSound } = await Audio.Sound.createAsync({ uri: loadSoundPre?.data?.link });
-          setSound(newSound);
-          setIsPlaying(true);
-        } else {
-          const loadSound = await loadSoundNor(idSound);
-          const { sound: newSound } = await Audio.Sound.createAsync({ uri: loadSound?.data[128] });
-          setSound(newSound);
-          setIsPlaying(true);
-        }
-        setLoading(false);
-      } catch (error) {
-        console.error('Error loading music data:', error);
-      }
-    };
-
     fetchData(); // Gọi hàm fetchData
   }, [idSound]); // Chạy lại khi idSound thay đổi
 
@@ -113,6 +120,70 @@ export default function PlayMusicUI({ route }) {
 
   const toggleSoundRecomend = (id) => {
     setIdSound(id);
+  };
+
+  const toggleRandom = () => {
+    setRandom(!random);
+  };
+  const toggleRepeat = () => {
+    if (repeat < 2) {
+      setRepeat(repeat + 1);
+    } else {
+      setRepeat(0);
+    }
+  };
+
+  const togglePrevious = () => {
+    const currentIndex = dataPlaylist.findIndex((item) => item.encodeId === idSound);
+    if (random === true) {
+      // Tạo một chỉ số ngẫu nhiên từ 0 đến playList.length - 1
+      const randomIndex = Math.floor(Math.random() * dataPlaylist.length);
+      // Đảm bảo không chọn lại chính phần tử hiện tại
+      if (randomIndex !== currentIndex) {
+        setIdSound(dataPlaylist[randomIndex].encodeId);
+      } else {
+        // Nếu randomIndex trùng với currentIndex, chọn phần tử tiếp theo hoặc fetchData
+        if (currentIndex > 0) {
+          setIdSound(dataPlaylist[currentIndex - 1].encodeId);
+        } else if (currentIndex === 0) {
+          fetchData();
+        }
+      }
+    } else {
+      // Nếu phần tử hiện tại là phần tử đầu tiên, gọi hàm fetchData
+      if (currentIndex === 0) {
+        fetchData();
+      } else if (currentIndex > 0) {
+        // Nếu không phải phần tử đầu tiên, chuyển sang phần tử trước đó
+        setIdSound(dataPlaylist[currentIndex - 1].encodeId);
+      }
+    }
+  };
+
+  const toggleNext = () => {
+    const currentIndex = dataPlaylist.findIndex((item) => item.encodeId === idSound);
+    if (random === true) {
+      // Tạo một chỉ số ngẫu nhiên từ 0 đến playList.length - 1
+      const randomIndex = Math.floor(Math.random() * dataPlaylist.length);
+      // Đảm bảo không chọn lại chính phần tử hiện tại
+      if (randomIndex !== currentIndex) {
+        setIdSound(dataPlaylist[randomIndex].encodeId);
+      } else {
+        // Nếu randomIndex trùng với currentIndex, chọn phần tử tiếp theo hoặc fetchData
+        if (currentIndex < dataPlaylist.length - 1) {
+          setIdSound(dataPlaylist[currentIndex + 1].encodeId);
+        } else {
+          fetchData();
+        }
+      }
+    } else {
+      // Nếu phần tử hiện tại là phần tử đầu tiên, gọi hàm fetchData
+      if (currentIndex < dataPlaylist.length - 1) {
+        setIdSound(dataPlaylist[currentIndex + 1].encodeId);
+      } else {
+        fetchData();
+      }
+    }
   };
 
   return loading ? (
@@ -332,7 +403,9 @@ export default function PlayMusicUI({ route }) {
               <Animated.Image style={[styles.image, animatedStyle]} source={{ uri: music?.thumbnailM }} />
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <FontAwesome6 name="share-square" size={wp(6)} color="#A9A9A9" />
+              <TouchableOpacity>
+                <FontAwesome6 name="share-square" size={wp(6)} color="#A9A9A9" />
+              </TouchableOpacity>
               <View style={{ flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Text
                   numberOfLines={1} // Giới hạn số dòng hiển thị
@@ -355,7 +428,9 @@ export default function PlayMusicUI({ route }) {
                     : 'Unknown Artist'}{' '}
                 </Text>
               </View>
-              <FontAwesome5 name="heart" size={wp(6)} color="#A9A9A9" />
+              <TouchableOpacity>
+                <FontAwesome5 name="heart" size={wp(6)} color="#A9A9A9" />
+              </TouchableOpacity>
             </View>
           </View>
           <View key="3" style={styles.page}>
@@ -456,10 +531,22 @@ export default function PlayMusicUI({ route }) {
           <Text style={styles.timeText}>{formatTime(duration)}</Text>
         </View>
         <View style={styles.controlContainer}>
-          <TouchableOpacity onPress={() => {}}>
-            <FontAwesome name="random" size={wp(5)} color="#A9A9A9" />
+          <TouchableOpacity
+            onPress={() => {
+              toggleRandom();
+            }}
+          >
+            {random ? (
+              <FontAwesome name="random" size={wp(5)} color="#c273ed" />
+            ) : (
+              <FontAwesome name="random" size={wp(5)} color="#A9A9A9" />
+            )}
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => {}}>
+          <TouchableOpacity
+            onPress={() => {
+              togglePrevious();
+            }}
+          >
             <AntDesign name="stepbackward" size={wp(7)} color="white" />
           </TouchableOpacity>
 
@@ -482,11 +569,22 @@ export default function PlayMusicUI({ route }) {
               )}
             </View>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => {}}>
+          <TouchableOpacity onPress={toggleNext}>
             <AntDesign name="stepforward" size={wp(7)} color="white" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => {}}>
-            <Feather name="repeat" size={wp(5)} color="#A9A9A9" />
+          <TouchableOpacity
+            onPress={() => {
+              toggleRepeat();
+            }}
+          >
+            {/* <MaterialIcons name="repeat-one" size={24} color="black" /> */}
+            {repeat === 1 ? (
+              <MaterialIcons name="repeat" size={wp(5)} color="#c273ed" />
+            ) : repeat === 0 ? (
+              <MaterialIcons name="repeat" size={wp(5)} color="#A9A9A9" />
+            ) : (
+              <MaterialIcons name="repeat-one" size={wp(5)} color="#c273ed" />
+            )}
           </TouchableOpacity>
         </View>
       </View>

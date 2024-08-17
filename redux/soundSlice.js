@@ -25,7 +25,8 @@ export const loadSoundData = createAsyncThunk('sound/loadSoundData', async (idMu
 export const soundSlice = createSlice({
   name: 'sound',
   initialState: {
-    dataPlaylist: {},
+    dataPlaylist: [],
+    dataPlayListFull: {},
     soundData: {},
     titlePlaylist: '',
     isLoading: true,
@@ -34,6 +35,9 @@ export const soundSlice = createSlice({
     setDataPlaylist: (state, action) => {
       state.dataPlaylist = action.payload;
     },
+    setDataPlayListFull: (state, action) => {
+      state.dataPlayListFull = action.payload;
+    },
     setTitlePlaylist: (state, action) => {
       state.titlePlaylist = action.payload;
     },
@@ -41,7 +45,7 @@ export const soundSlice = createSlice({
   extraReducers: (builder) => {
     builder.addCase(loadPlayList.fulfilled, (state, action) => {
       state.isLoading = false;
-      state.dataPlaylist = action.payload;
+      state.dataPlayListFull = action.payload;
     });
     builder.addCase(loadPlayList.pending, (state, action) => {
       state.isLoading = true;

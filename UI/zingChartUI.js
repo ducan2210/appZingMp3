@@ -289,7 +289,7 @@ export default function ZingChartUI() {
             {chart?.items?.slice(0, 20).map((item, index) => (
               <TouchableOpacity
                 onPress={() => {
-                  dispatch(setDataPlaylist(chart));
+                  dispatch(setDataPlaylist(chart.items));
                   dispatch(setTitlePlaylist('#ZingChart'));
                   toPlayMusicUI(item.encodeId);
                 }}

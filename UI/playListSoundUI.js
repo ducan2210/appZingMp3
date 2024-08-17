@@ -7,8 +7,9 @@ import { convertSecondsToTime, formatNumber } from '../component/library';
 import LoadingIndicator from '../component/loadingIndicator';
 import { toggleGoBack, toggleToPlayMusicUI, toggleToArtistInfo } from '../component/remote';
 import { loadDataArtist } from '../redux/artistSlice';
+import { setDataPlaylist } from '../redux/soundSlice';
 export default function PlayListSoundUI() {
-  const playListData = useSelector((state) => state.sound.dataPlaylist);
+  const playListData = useSelector((state) => state.sound.dataPlayListFull);
   const playListTitle = useSelector((state) => state.sound.titlePlaylist);
   const isLoading = useSelector((state) => state.sound.isLoading);
   const toPlayMusicUI = toggleToPlayMusicUI();
@@ -98,7 +99,7 @@ export default function PlayListSoundUI() {
               // numberOfLines={2}
               ellipsizeMode="tail"
             >
-              {playListData?.data?.sortDescription}.
+              {playListData?.data?.sortDescription}
             </Text>
           </View>
           <View>
@@ -112,6 +113,7 @@ export default function PlayListSoundUI() {
                   alignItems: 'center',
                 }}
                 onPress={() => {
+                  dispatch(setDataPlaylist(playListData?.data?.song?.items));
                   toPlayMusicUI(item.encodeId);
                 }}
               >
